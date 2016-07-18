@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">机遇</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_home_page">HomePageActivity</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="fristicon">开始</string>
+    <string name="second">我的攒机</string>
+    <string name="third">机遇论谈</string>
+    <color name="orange">#FF9900</color>
+    <color name="green">#009900</color>
+    <color name="blue">#000099</color>
+</resources>
