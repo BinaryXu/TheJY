@@ -42,8 +42,9 @@ public class FirstFragment extends Fragment {
     private RecyclerView recyclerView;
     private SimpleAdapter simpleAdapter;
     boolean isLoading;
-    private List<Map<String, Object>> data = new ArrayList<>();
-    private Handler handler = new Handler();;
+    private List<String> data = new ArrayList<>();
+    private Handler handler = new Handler();
+    private LinearLayoutManager linearLayoutManager;
     public FirstFragment(){
     }
 
@@ -55,11 +56,14 @@ public class FirstFragment extends Fragment {
         initView(view);
         //设置轮播图
 //        initCycle();
-        //设置下拉刷新
-        initSwipe();
-        initData();
         //设置Recyclerview
         initRecycler();
+        //设置下拉刷新
+        initSwipe();
+        //获取数据
+        initData();
+
+
         return view;
     }
 
@@ -68,34 +72,46 @@ public class FirstFragment extends Fragment {
 //        mImageCycleView = (ImageCycleView)view.findViewById(R.id.icv_topView);
         mSwipeLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe);
     }
-
+    //下拉刷新
     private void initSwipe() {
         mSwipeLayout.setColorSchemeResources(R.color.orange, R.color.green, R.color.blue);
+//        setOnRefreshListener(OnRefreshListener):添加下拉刷新监听器
+//        setRefreshing(boolean):显示或者隐藏刷新进度条
+//        isRefreshing():检查是否处于刷新状态
+
         mSwipeLayout.post(new Runnable() {
             @Override
             public void run() {
                 mSwipeLayout.setRefreshing(true);
             }
         });
+
         mSwipeLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        data.clear();
-                        getData();
+//                        data.clear();
+                        for (int i = 0; i < 2; i++) {
+                            int index = i + 1;
+                            data.add(0,"new item" + index);
+                        }
+                        simpleAdapter.notifyDataSetChanged();
+                        mSwipeLayout.setRefreshing(false);
                     }
                 }, 2000);
             }
         });
     }
-
+    //Recycler列表
     private void initRecycler() {
         simpleAdapter = new SimpleAdapter(getActivity(),data);
         recyclerView.setAdapter(simpleAdapter);
         //设置RecyclerView的布局管理
-        final LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false);
+        linearLayoutManager = new LinearLayoutManager(getActivity(),LinearLayoutManager.VERTICAL,false);
+        //设置布局
         recyclerView.setLayoutManager(linearLayoutManager);
         //设置RecyclerView分割线
         recyclerView.addItemDecoration(new DividerItemDecoration(getActivity(),DividerItemDecoration.VERTICAL_LIST));
@@ -104,7 +120,26 @@ public class FirstFragment extends Fragment {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
-                Log.d("TGA", "StateChanged = " + newState);
+//              scrollState = SCROLL_STATE_TOUCH_SCROLL(1)：表示正在滚动。当屏幕滚动且用户使用的触碰或手指还在屏幕上时为1
+//              scrollState =SCROLL_STATE_FLING(2) ：表示手指做了抛的动作（手指离开屏幕前，用力滑了一下，屏幕产生惯性滑动）。
+//              scrollState =SCROLL_STATE_IDLE(0) ：表示屏幕已停止。屏幕停止滚动时为0
+                // 记录当前滑动状态
+                Log.d("test", "StateChanged = " + newState);
+                int lastVisibleItemPosition = linearLayoutManager.findLastVisibleItemPosition();
+                if (newState == RecyclerView.SCROLL_STATE_IDLE && lastVisibleItemPosition + 1 == simpleAdapter.getItemCount()) {
+                    simpleAdapter.changeMoreStatus(SimpleAdapter.LOADING_MORE);
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int i = 0; i < 2; i++) {
+                                int index = i + 1;
+                                data.add("more item" + index);
+                            }
+                            simpleAdapter.notifyDataSetChanged();
+                            simpleAdapter.changeMoreStatus(SimpleAdapter.PULLUP_LOAD_MORE);
+                        }
+                    }, 2500);
+                }
             }
 
             @Override
@@ -112,34 +147,11 @@ public class FirstFragment extends Fragment {
                 super.onScrolled(recyclerView, dx, dy);
                 Log.d("test", "onScrolled");
 
-                int lastVisibleItemPosition = linearLayoutManager.findLastVisibleItemPosition();
-                int firstVisibleItemPosition = linearLayoutManager.findFirstVisibleItemPosition();
-                // 判断滚动到顶部
-                if(firstVisibleItemPosition == 0){
-                    mSwipeLayout.setRefreshing(true);
-                }else{
-                    mSwipeLayout.setRefreshing(false);
-                }
-                if (lastVisibleItemPosition + 1 == simpleAdapter.getItemCount()) {
-                    Log.d("test", "loading executed");
 
-                    boolean isRefreshing = mSwipeLayout.isRefreshing();
-                    if (isRefreshing) {
-                        simpleAdapter.notifyItemRemoved(simpleAdapter.getItemCount());
-                        return;
-                    }
-                    if (!isLoading) {
-                        isLoading = true;
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                getData();
-                                Log.d("test", "load more completed");
-                                isLoading = false;
-                            }
-                        }, 1000);
-                    }
-                }
+                int firstVisibleItemPosition = linearLayoutManager.findFirstVisibleItemPosition();
+                Log.d("test", "firstVisibleItemPosition：" + firstVisibleItemPosition);
+
+//
             }
         });
         //添加点击事件
@@ -167,13 +179,13 @@ public class FirstFragment extends Fragment {
     }
 
     private void getData() {
-        for (int i = 0; i < 6; i++) {
-            Map<String, Object> map = new HashMap<>();
-            data.add(map);
+        for (int i = 'A'; i < 'C'; i++) {
+            data.add(""+(char)i);
         }
+        Log.d("test", "获取数据");
         simpleAdapter.notifyDataSetChanged();
         mSwipeLayout.setRefreshing(false);
-        simpleAdapter.notifyItemRemoved(simpleAdapter.getItemCount());
+//        simpleAdapter.notifyItemRemoved(simpleAdapter.getItemCount());
     }
 
     private void initCycle() {
