@@ -179,7 +179,7 @@ public class FirstFragment extends Fragment {
     }
 
     private void getData() {
-        for (int i = 'A'; i < 'C'; i++) {
+        for (int i = 'A'; i < 'Z'; i++) {
             data.add(""+(char)i);
         }
         Log.d("test", "获取数据");
